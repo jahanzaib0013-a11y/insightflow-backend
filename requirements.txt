@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic[email]
+pydantic-settings
+PyJWT
+bcrypt
+python-multipart
+httpx
+loguru
+
+# dev / test
+pytest
+ruff
+pre-commit
