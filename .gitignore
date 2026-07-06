@@ -1,0 +1,13 @@
+# Secrets — never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local database
+*.db
+
+# Tooling
+.pytest_cache/
