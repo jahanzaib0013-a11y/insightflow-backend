@@ -20,6 +20,12 @@ def create_user(db: Session, user_in: UserCreate) -> User:
     return user
 
 
+def set_password(db: Session, user: User, new_password: str) -> None:
+    """The only place a password is (re)hashed onto an existing user."""
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+
+
 def authenticate(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
     # user.hashed_password is None for OAuth-only accounts — they can't password-login

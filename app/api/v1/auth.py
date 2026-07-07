@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -8,6 +8,12 @@ from app.schemas.user import UserCreate
 from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest
 from app.services import user_service, email_service
 from app.core.config import settings
+from app.core.exceptions import (
+    EmailAlreadyRegistered,
+    IncorrectCredentials,
+    InvalidResetLink,
+    InvalidVerificationLink,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.security import (
     create_access_token,
@@ -15,7 +21,6 @@ from app.core.security import (
     verify_reset_token,
     create_verify_token,
     verify_verify_token,
-    hash_password,
 )
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -30,7 +35,7 @@ def register(
     user: UserCreate, background: BackgroundTasks, db: Session = Depends(get_db)
 ):
     if user_service.get_user_by_email(db, user.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise EmailAlreadyRegistered()
     new_user = user_service.create_user(db, user)
     logger.info("User registered: %s (id=%s)", new_user.email, new_user.id)
     # BackgroundTasks: the email is sent AFTER the response goes out, so
@@ -48,14 +53,10 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     flag → land the user on the login page with a success marker."""
     email = verify_verify_token(token)
     if not email:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification link"
-        )
+        raise InvalidVerificationLink()
     user = user_service.get_user_by_email(db, email)
     if not user:
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired verification link"
-        )
+        raise InvalidVerificationLink()
     if not user.is_verified:
         user.is_verified = True
         db.commit()
@@ -72,7 +73,7 @@ def login(
         # WARNING level: repeated failures for one account are the signature
         # of a guessing attack — worth being able to filter for.
         logger.warning("Failed login attempt for %s", form_data.username)
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
+        raise IncorrectCredentials()
     logger.info("Login: %s", user.email)
     return {"access_token": create_access_token(user.email), "token_type": "bearer"}
 
@@ -105,11 +106,10 @@ def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
 def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
     email = verify_reset_token(body.token)
     if not email:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+        raise InvalidResetLink()
     user = user_service.get_user_by_email(db, email)
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
-    user.hashed_password = hash_password(body.new_password)
-    db.commit()
+        raise InvalidResetLink()
+    user_service.set_password(db, user, body.new_password)
     logger.info("Password reset completed: %s", user.email)
     return {"message": "Password updated. You can now sign in."}
