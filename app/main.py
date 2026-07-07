@@ -1,22 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+
+from app.api.errors import app_error_handler
+from app.api.v1 import auth, oauth
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.logging import setup_logging
 from app.db.session import Base, engine
-from app.api.v1 import auth, oauth
 
 setup_logging()
 
 app = FastAPI()
-
-
-@app.exception_handler(AppError)
-async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    """One translation point: any raised AppError becomes its JSON response."""
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_exception_handler(AppError, app_error_handler)
+
 Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router)
