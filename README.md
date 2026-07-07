@@ -79,7 +79,6 @@ reset/verify flows stay fully testable.
 ### 3. Run
 
 ```bash
-alembic upgrade head          # build/upgrade the database schema
 uvicorn app.main:app --reload
 ```
 
@@ -240,9 +239,8 @@ pushing.
 
 ## Gotchas (learned the hard way)
 
-- Schema is managed by **Alembic**. After changing a model:
-  `alembic revision --autogenerate -m "describe change"` then
-  `alembic upgrade head`. Fresh clone? `alembic upgrade head` builds the DB.
+- `create_all` never ALTERs an existing table — after changing a model:
+  `rm insightflow.db` (dev only; Alembic is the grown-up fix, see below)
 - `/auth/login` expects **form fields** (`username`, `password`), not JSON —
   that's the OAuth2 password-flow spec; every other endpoint takes JSON
 - OAuth users have `hashed_password = NULL` and cannot password-login;
@@ -253,7 +251,7 @@ pushing.
 
 ## Roadmap / known gaps
 
-- ~~**Alembic migrations** — replace the `rm insightflow.db` dance~~ ✅ done (`alembic/`)
+- **Alembic migrations** — replace the `rm insightflow.db` dance
 - ~~**CI** — run pytest + ruff on every push~~ ✅ done (`.github/workflows/ci.yml`)
 - ~~**Resend-verification endpoint** — for users who lose the email~~ ✅ done (`POST /auth/resend-verification`)
 - **Rate limiting** on `/auth/login`
