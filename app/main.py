@@ -6,6 +6,7 @@ from app.api.errors import app_error_handler
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.logging import setup_logging
+from app.db.session import Base, engine
 
 setup_logging()
 
@@ -21,8 +22,7 @@ def create_app() -> FastAPI:
     )
     app.add_exception_handler(AppError, app_error_handler)
 
-    # Tables are managed by Alembic migrations now: `alembic upgrade head`
-    # (tests still build their own throwaway schema in conftest.py)
+    Base.metadata.create_all(bind=engine)
 
     app.include_router(v1.router)
 
