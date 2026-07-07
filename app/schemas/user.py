@@ -1,12 +1,14 @@
 """Shapes describing users themselves."""
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from app.schemas.fields import Password
 
 
 class UserCreate(BaseModel):
     full_name: str | None = None
     email: EmailStr
-    password: str = Field(min_length=12)
+    password: Password
 
 
 class UserOut(BaseModel):
