@@ -6,7 +6,7 @@ from app.api.errors import app_error_handler
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.logging import setup_logging
-from app.db.session import init_db
+from app.models import init_db
 
 setup_logging()
 
