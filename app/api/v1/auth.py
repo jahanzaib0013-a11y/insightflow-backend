@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.user import UserCreate, UserOut
-from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest
+from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest, Token
 from app.services import user_service, email_service
 from app.core.config import settings
 from app.core.exceptions import (
@@ -64,7 +64,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     return RedirectResponse(f"{settings.FRONTEND_URL}/login?verified=1")
 
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -75,7 +75,7 @@ def login(
         logger.warning("Failed login attempt for %s", form_data.username)
         raise IncorrectCredentials()
     logger.info("Login: %s", user.email)
-    return {"access_token": create_access_token(user.email), "token_type": "bearer"}
+    return Token(access_token=create_access_token(user.email))
 
 
 @router.get("/me", response_model=UserOut)
