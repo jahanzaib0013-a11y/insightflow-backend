@@ -1,5 +1,7 @@
 # InsightFlow Backend
 
+[![CI](https://github.com/jahanzaib0013-a11y/insightflow-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/jahanzaib0013-a11y/insightflow-backend/actions/workflows/ci.yml)
+
 A FastAPI backend with a complete, production-shaped authentication system:
 password login with JWTs, Google and GitHub OAuth, email verification, and
 password reset via styled HTML emails — covered end to end by a 23-test suite.
@@ -249,7 +251,7 @@ pushing.
 ## Roadmap / known gaps
 
 - **Alembic migrations** — replace the `rm insightflow.db` dance
-- **CI** — run pytest + ruff on every push (GitHub Actions)
+- ~~**CI** — run pytest + ruff on every push~~ ✅ done (`.github/workflows/ci.yml`)
 - **Resend-verification endpoint** — for users who lose the email
 - **Rate limiting** on `/auth/login`
 - Refresh tokens; httpOnly-cookie storage on the frontend; error `code`
