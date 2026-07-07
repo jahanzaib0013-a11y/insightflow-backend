@@ -14,6 +14,18 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 
+def init_db() -> None:
+    """Create any missing tables from the registered models (dev convenience;
+    versioned migrations take over when there's data worth preserving).
+
+    The models import lives inside the function to avoid a circular import —
+    models import Base from this module — and to guarantee every table is
+    registered before create_all runs, regardless of import order elsewhere."""
+    from app import models  # noqa: F401
+
+    Base.metadata.create_all(bind=engine)
+
+
 def get_db():
     db = SessionLocal()
     try:
