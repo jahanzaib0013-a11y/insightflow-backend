@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_URL: str = "http://127.0.0.1:8000"
+
+    # Swap for postgresql://user:pass@host/dbname when you outgrow SQLite.
+    DATABASE_URL: str = "sqlite:///./insightflow.db"
     LOG_LEVEL: str = "INFO"
 
     # Auth / JWT
