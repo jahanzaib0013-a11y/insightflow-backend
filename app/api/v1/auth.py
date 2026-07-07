@@ -40,7 +40,7 @@ def register(
     logger.info("User registered: %s (id=%s)", new_user.email, new_user.id)
     # BackgroundTasks: the email is sent AFTER the response goes out, so
     # signup stays instant instead of waiting ~5s on the SMTP handshake.
-    verify_link = f"http://127.0.0.1:8000/auth/verify-email?token={create_verify_token(new_user.email)}"
+    verify_link = f"{settings.BACKEND_URL}/auth/verify-email?token={create_verify_token(new_user.email)}"
     background.add_task(
         email_service.send_verify_email, new_user.email, new_user.full_name, verify_link
     )
