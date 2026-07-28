@@ -1,0 +1,19 @@
+# Runs automatically on `git commit` (after `pre-commit install`).
+# Kept deliberately fast — linting and hygiene only, no test suite.
+# Run tests yourself with `pytest` before pushing.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4
+    hooks:
+      - id: ruff            # linter (bug-shaped code, unused imports, ...)
+        args: [--fix]       # auto-fix what's safely fixable
+      - id: ruff-format     # formatter (the prettier of Python)
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: detect-private-key
