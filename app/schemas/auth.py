@@ -1,6 +1,8 @@
 """Shapes for auth-flow requests (login, recovery, verification)."""
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
+
+from app.schemas.fields import Password
 
 
 class Token(BaseModel):
@@ -14,4 +16,4 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str = Field(min_length=12)
+    new_password: Password
