@@ -40,6 +40,31 @@ Layering rule: **router → service → model**. Routers speak HTTP and pick
 status codes; services hold logic and never import FastAPI; schemas validate
 the edges; secrets live only in .env.
 
+## Where does X go? (the map)
+
+| I want to add / change... | It goes in |
+|---|---|
+| An endpoint (a URL) | `api/v1/<feature>.py` |
+| Request/response shape | `schemas/<feature>.py` |
+| A validation rule used by ONE schema | inline `Field(...)` in that schema |
+| A validation rule shared by 2+ schemas | `schemas/fields.py` |
+| Business logic (DB queries, decisions) | `services/<feature>_service.py` |
+| A database table | `models/<feature>.py` (+ import it in `models/__init__.py`) |
+| A setting that differs per environment | `core/config.py` + `.env` |
+| An error the API can return | `core/exceptions.py` |
+| How errors become JSON | `api/errors.py` (already done — rarely touched) |
+| "This route requires login" | add `Depends(get_current_user)` — defined in `api/deps.py` |
+| Hashing / JWT logic | `core/security/` |
+| What an email says | `emails/templates/<name>.html` + a function in `emails/templates.py` |
+| How email is sent | `services/email_service.py` (rarely touched) |
+| Custom middleware (when you write one) | `api/middleware.py` (doesn't exist yet — create when needed) |
+| A constant fixed forever, one module uses it | top of that module |
+| Wiring anything into the app | `main.py` |
+| A test | `tests/test_<feature>.py` |
+
+Rule of thumb when unsure: *"would this survive without a web server?"*
+Yes → `core/`, `services/`, `models/`, `emails/`. No → `api/`.
+
 ## Adding a feature (the recipe)
 
 Example: "data sources". Follow the same five steps every time:
