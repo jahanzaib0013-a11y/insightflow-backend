@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.logging import setup_logging
 from app.db.session import Base, engine
@@ -19,7 +20,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[settings.FRONTEND_URL],
     allow_methods=["*"],
     allow_headers=["*"],
 )

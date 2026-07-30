@@ -35,6 +35,12 @@ def _verify_purpose_token(token: str, purpose: str) -> str | None:
     return payload.get("sub")
 
 
+# Purpose constants: each create/verify pair must agree on the exact string,
+# so it is written once here and never inline.
+PURPOSE_PASSWORD_RESET = "password-reset"
+PURPOSE_EMAIL_VERIFY = "email-verify"
+
+
 # --- access tokens (login sessions) ---
 
 
@@ -46,19 +52,23 @@ def create_access_token(subject: str) -> str:
 
 
 def create_reset_token(subject: str) -> str:
-    return _create_token(subject, settings.RESET_TOKEN_EXPIRE_MINUTES, "password-reset")
+    return _create_token(
+        subject, settings.RESET_TOKEN_EXPIRE_MINUTES, PURPOSE_PASSWORD_RESET
+    )
 
 
 def verify_reset_token(token: str) -> str | None:
-    return _verify_purpose_token(token, "password-reset")
+    return _verify_purpose_token(token, PURPOSE_PASSWORD_RESET)
 
 
 # --- email verification links ---
 
 
 def create_verify_token(subject: str) -> str:
-    return _create_token(subject, settings.VERIFY_TOKEN_EXPIRE_MINUTES, "email-verify")
+    return _create_token(
+        subject, settings.VERIFY_TOKEN_EXPIRE_MINUTES, PURPOSE_EMAIL_VERIFY
+    )
 
 
 def verify_verify_token(token: str) -> str | None:
-    return _verify_purpose_token(token, "email-verify")
+    return _verify_purpose_token(token, PURPOSE_EMAIL_VERIFY)
