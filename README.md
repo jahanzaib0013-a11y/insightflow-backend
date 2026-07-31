@@ -160,26 +160,43 @@ out; any raised `AppError` is turned into JSON by the single handler.
 
 ### Where does X go? (the map)
 
-| I want to add / change... | It goes in |
-|---|---|
-| An endpoint (a URL) | `api/v1/<feature>.py` |
-| Request/response shape | `schemas/<feature>.py` |
-| A validation rule used by ONE schema | inline `Field(...)` in that schema |
-| A validation rule shared by 2+ schemas | `schemas/fields.py` |
-| Business logic (DB queries, decisions) | `services/<feature>_service.py` |
-| A database table | `models/<feature>.py` + import in `models/__init__.py` |
-| A setting that differs per environment | `core/config.py` + `.env` |
-| An error the API can return | `core/exceptions.py` |
-| "This route requires login" | `Depends(get_current_user)` from `api/deps.py` |
-| Hashing / JWT logic | `core/security/` |
-| What an email says | `emails/templates/<name>.html` + `emails/templates.py` |
-| Custom middleware (when first needed) | `api/middleware.py` (create then) |
-| A forever-fixed, single-module constant | top of that module |
-| Wiring anything into the app | `main.py` |
-| A test | `tests/test_<feature>.py` |
+Every row shows the rule **and** a live example already in this codebase —
+open the example file to see the pattern before adding your own.
 
-Tiebreaker when unsure: *"would this survive without a web server?"*
-Yes → `core/`, `services/`, `models/`, `emails/`. No → `api/`.
+**Everyday rows (you'll use these constantly):**
+
+| I want to add / change... | It goes in | Live example |
+|---|---|---|
+| An endpoint (a URL) | `api/v1/<feature>.py` | `POST /register` in `api/v1/auth.py` |
+| Request/response shape | `schemas/<feature>.py` | `UserCreate` in `schemas/user.py` |
+| Business logic (DB queries, decisions) | `services/<feature>_service.py` | `authenticate()` in `services/user_service.py` |
+| A database table | `models/<feature>.py` + import in `models/__init__.py` | `User` in `models/user.py` |
+| A test | `tests/test_<feature>.py` | `test_login_returns_token` in `tests/test_auth.py` |
+| "This route requires login" | one parameter: `Depends(get_current_user)` | `read_me()` in `api/v1/auth.py` |
+
+**Validation rows:**
+
+| Rule scope | It goes in | Live example |
+|---|---|---|
+| Used by ONE schema | inline `Field(...)` in that schema | — (none yet; e.g. `bio: str = Field(max_length=500)`) |
+| Shared by 2+ schemas | a named type in `schemas/fields.py` | `Password` (used by register **and** reset) |
+| Cross-field logic | `@model_validator` in the schema class | — (none yet; e.g. `start < end`) |
+| Needs the database ("email taken") | NOT validation → service/router | duplicate check in `register()` |
+
+**Occasional rows (touched rarely, but this is where):**
+
+| I want to add / change... | It goes in | Live example |
+|---|---|---|
+| A setting that differs per environment | `core/config.py` + `.env` | `DATABASE_URL` |
+| An error the API can return | a class in `core/exceptions.py` | `EmailAlreadyRegistered` |
+| Hashing / JWT logic | `core/security/` | `create_reset_token` in `tokens.py` |
+| What an email says | `emails/templates/<name>.html` + a function in `emails/templates.py` | `password_reset.html` |
+| A forever-fixed, single-module constant | top of that module | `PURPOSE_EMAIL_VERIFY` in `tokens.py` |
+| Custom middleware (first one ever) | `api/middleware.py` — create it then | — |
+| Wiring anything into the app | `main.py` | `app.add_exception_handler(...)` |
+
+Tiebreaker when a new thing fits no row: *"would this survive without a web
+server?"* Yes → `core/` / `services/` / `models/` / `emails/`. No → `api/`.
 
 ### Adding a feature (the recipe)
 
