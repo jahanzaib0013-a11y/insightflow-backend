@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserOut
 from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest
 from app.services import user_service, email_service
 from app.core.config import settings
@@ -78,13 +78,11 @@ def login(
     return {"access_token": create_access_token(user.email), "token_type": "bearer"}
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserOut)
 def read_me(current_user: User = Depends(get_current_user)):
-    return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "full_name": current_user.full_name,
-    }
+    # response_model shapes and documents the output: only UserOut's fields
+    # leave the API (hashed_password can never leak), and /docs shows the schema.
+    return current_user
 
 
 @router.post("/forgot-password")
