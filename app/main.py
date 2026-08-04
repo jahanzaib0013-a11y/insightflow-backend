@@ -10,22 +10,32 @@ from app.db.session import Base, engine
 
 setup_logging()
 
-app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.add_exception_handler(AppError, app_error_handler)
+def create_app() -> FastAPI:
+    """App factory: builds and wires a FastAPI instance.
 
-Base.metadata.create_all(bind=engine)
+    Lets tests or scripts construct fresh, differently-configured apps
+    instead of sharing one module-level global."""
+    app = FastAPI()
 
-app.include_router(auth.router)
-app.include_router(oauth.router)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[settings.FRONTEND_URL],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_exception_handler(AppError, app_error_handler)
+
+    Base.metadata.create_all(bind=engine)
+
+    app.include_router(auth.router)
+    app.include_router(oauth.router)
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    return app
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+app = create_app()
