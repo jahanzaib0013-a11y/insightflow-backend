@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import v1
 from app.api.errors import app_error_handler
-from app.api.v1 import auth, oauth
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.logging import setup_logging
@@ -12,10 +12,6 @@ setup_logging()
 
 
 def create_app() -> FastAPI:
-    """App factory: builds and wires a FastAPI instance.
-
-    Lets tests or scripts construct fresh, differently-configured apps
-    instead of sharing one module-level global."""
     app = FastAPI()
 
     app.add_middleware(
@@ -28,8 +24,7 @@ def create_app() -> FastAPI:
 
     Base.metadata.create_all(bind=engine)
 
-    app.include_router(auth.router)
-    app.include_router(oauth.router)
+    app.include_router(v1.router)
 
     @app.get("/health")
     def health():
