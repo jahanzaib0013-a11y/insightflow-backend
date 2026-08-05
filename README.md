@@ -97,6 +97,7 @@ uvicorn app.main:app --reload
 | POST | `/auth/login` | – | **form fields** `username` + `password` → JWT |
 | GET | `/auth/me` | Bearer | current user |
 | GET | `/auth/verify-email?token=` | – | email link target; flips `is_verified` |
+| POST | `/auth/resend-verification` | – | re-sends the verification email (unverified users only) |
 | POST | `/auth/forgot-password` | – | emails reset link (verified users only) |
 | POST | `/auth/reset-password` | – | token + new password → password updated |
 | GET | `/auth/google/login` · `/auth/github/login` | – | redirect into OAuth flow |
@@ -252,7 +253,7 @@ pushing.
 
 - **Alembic migrations** — replace the `rm insightflow.db` dance
 - ~~**CI** — run pytest + ruff on every push~~ ✅ done (`.github/workflows/ci.yml`)
-- **Resend-verification endpoint** — for users who lose the email
+- ~~**Resend-verification endpoint** — for users who lose the email~~ ✅ done (`POST /auth/resend-verification`)
 - **Rate limiting** on `/auth/login`
 - Refresh tokens; httpOnly-cookie storage on the frontend; error `code`
   field for machine-readable errors

@@ -152,6 +152,37 @@ def test_oauth_users_start_verified(db_session):
     assert user.is_verified is True
 
 
+# ---------- resend verification ----------
+
+
+def test_resend_verification_unverified_user_gets_email(client, outbox):
+    register(client)
+    outbox.clear()  # drop the signup verification email
+    res = client.post("/auth/resend-verification", json={"email": EMAIL})
+    assert res.status_code == 200
+    assert len(outbox) == 1
+    assert outbox[0]["to"] == EMAIL
+    assert "verify-email?token=" in outbox[0]["text"]
+
+
+def test_resend_verification_verified_user_gets_no_email(client, db_session, outbox):
+    register(client)
+    verify(client, db_session)
+    outbox.clear()
+    client.post("/auth/resend-verification", json={"email": EMAIL})
+    assert outbox == []
+
+
+def test_resend_verification_response_hides_whether_email_exists(client, outbox):
+    res_unknown = client.post(
+        "/auth/resend-verification", json={"email": "nobody@example.com"}
+    )
+    register(client)
+    res_known = client.post("/auth/resend-verification", json={"email": EMAIL})
+    assert res_unknown.status_code == res_known.status_code == 200
+    assert res_unknown.json() == res_known.json()
+
+
 # ---------- password reset ----------
 
 

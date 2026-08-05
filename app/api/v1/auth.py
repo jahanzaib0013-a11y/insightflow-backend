@@ -5,7 +5,12 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.user import UserCreate, UserOut
-from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest, Token
+from app.schemas.auth import (
+    ForgotPasswordRequest,
+    ResendVerificationRequest,
+    ResetPasswordRequest,
+    Token,
+)
 from app.services import user_service, email_service
 from app.core.config import settings
 from app.core.exceptions import (
@@ -30,6 +35,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _queue_verification_email(background: BackgroundTasks, user: User) -> None:
+    """Build a fresh verify link and send it after the response goes out.
+
+    BackgroundTasks keeps the endpoint instant instead of waiting ~5s on
+    the SMTP handshake. Shared by register and resend-verification."""
+    verify_link = f"{settings.BACKEND_URL}/auth/verify-email?token={create_verify_token(user.email)}"
+    background.add_task(
+        email_service.send_verify_email, user.email, user.full_name, verify_link
+    )
+
+
 @router.post("/register")
 def register(
     user: UserCreate, background: BackgroundTasks, db: Session = Depends(get_db)
@@ -38,13 +54,24 @@ def register(
         raise EmailAlreadyRegistered()
     new_user = user_service.create_user(db, user)
     logger.info("User registered: %s (id=%s)", new_user.email, new_user.id)
-    # BackgroundTasks: the email is sent AFTER the response goes out, so
-    # signup stays instant instead of waiting ~5s on the SMTP handshake.
-    verify_link = f"{settings.BACKEND_URL}/auth/verify-email?token={create_verify_token(new_user.email)}"
-    background.add_task(
-        email_service.send_verify_email, new_user.email, new_user.full_name, verify_link
-    )
+    _queue_verification_email(background, new_user)
     return {"id": new_user.id, "email": new_user.email}
+
+
+@router.post("/resend-verification")
+def resend_verification(
+    body: ResendVerificationRequest,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    user = user_service.get_user_by_email(db, body.email)
+    # Only unverified, existing accounts get a fresh link; but the response
+    # never varies, so this endpoint can't be used to probe which emails
+    # are registered or verified.
+    if user and not user.is_verified:
+        _queue_verification_email(background, user)
+        logger.info("Verification email re-sent: %s", user.email)
+    return {"message": "If that email needs verification, a new link has been sent."}
 
 
 @router.get("/verify-email")
